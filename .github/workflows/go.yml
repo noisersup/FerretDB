@@ -112,6 +112,16 @@ jobs:
           git status
           git diff --exit-code
 
+  leduchosky:
+    name: ledu
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: greet
+        uses: noisersup/github-actions/leduchosky@test
+        with:
+          fetch-depth: 0
+
   golangci-lint:
     name: golangci-lint
     runs-on: ubuntu-20.04
