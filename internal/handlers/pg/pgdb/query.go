@@ -217,6 +217,17 @@ func buildIterator(ctx context.Context, tx pgx.Tx, p *iteratorParams) (types.Doc
 	return newIterator(ctx, rows, p), res, nil
 }
 
+// 1 is always key, 2 operator, and 3 - value
+var (
+	queryEqual    string = "((_jsonb%[1]s%[2]s)::jsonb = %[3]s)"
+	queryContains string = "(_jsonb%[1]s%[2]s)::jsonb @> %[3]s"
+)
+
+func genQuery(key, operator, value string, methods ...string) {
+	for _, method := range methods {
+	}
+}
+
 // prepareWhereClause adds WHERE clause with given filters to the query and returns the query and arguments.
 func prepareWhereClause(p *Placeholder, sqlFilters *types.Document) (string, []any, error) {
 	var filters []string
