@@ -47,6 +47,7 @@ import (
 // It's used for parsing the user input.
 //
 // Keep order in sync with documentation.
+// ss
 var cli struct {
 	Version  bool   `default:"false" help:"Print version to stdout and exit." env:"-"`
 	Handler  string `default:"pg" help:"${help_handler}"`
