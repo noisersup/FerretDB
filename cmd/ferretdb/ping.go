@@ -37,7 +37,7 @@ func ping() {
 		return
 	}
 
-	var urls []string
+	var urls []*url.URL
 
 	if cli.Listen.Addr != "" {
 		host, port, err := net.SplitHostPort(cli.Listen.Addr)
@@ -60,7 +60,7 @@ func ping() {
 			User:   url.UserPassword(cli.Setup.Username, cli.Setup.Password),
 		}
 
-		urls = append(urls, u.String())
+		urls = append(urls, u)
 	}
 
 	if cli.Listen.TLS != "" {
@@ -95,27 +95,28 @@ func ping() {
 			RawQuery: values.Encode(),
 		}
 
-		urls = append(urls, u.String())
+		urls = append(urls, u)
 	}
 
 	if cli.Listen.Unix != "" {
 		l.Debugf("--listen-unix flag is set. Ping to %s will be performed.", cli.Listen.Unix)
 
-		urls = append(urls, "mongodb://"+url.PathEscape(cli.Listen.Unix))
+		urls = append(urls, &url.URL{Scheme: "mongodb", Path: url.PathEscape(cli.Listen.Unix)})
 	}
 
 	if len(urls) == 0 {
-		l.Info("Neither --listen-addr nor --listen-unix flags were specified - skipping ping.")
+		l.Info("None of --listen-addr, --listen-unix nor --listen-tls flags were specified - skipping ping.")
 		return
 	}
 
 	for _, u := range urls {
-		l.Debugf("Pinging %s...", u)
+		redactedURL := u.Redacted()
+		l.Debugf("Pinging %s...", redactedURL)
 
 		ctx, cancel := context.WithTimeout(context.Background(), cli.Setup.Timeout)
 		defer cancel()
 
-		client, err := mongo.Connect(ctx, options.Client().ApplyURI(u))
+		client, err := mongo.Connect(ctx, options.Client().ApplyURI(u.String()))
 		if err != nil {
 			logger.Fatal("Connection failed.", zap.Error(err))
 		}
@@ -131,11 +132,6 @@ func ping() {
 			logger.Fatal("Ping failed.", zap.Error(pingErr))
 		}
 
-		var uri *url.URL
-		if uri, err = url.Parse(u); err == nil {
-			u = uri.Redacted()
-		}
-
-		l.Infof("Ping to %s successful.", u)
+		l.Infof("Ping to %s successful.", redactedURL)
 	}
 }
