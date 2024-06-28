@@ -37,12 +37,12 @@ func ping() {
 		return
 	}
 
-	var urls []string
+	var urls []*url.URL
 
 	if cli.Listen.Addr != "" {
 		host, port, err := net.SplitHostPort(cli.Listen.Addr)
 		if err != nil {
-			l.Fatal(err)
+			logger.Fatal("Getting host and port failed.", zap.Error(err))
 		}
 
 		l.Debugf("--listen-addr flag is set. Ping to %s will be performed.", cli.Listen.Addr)
@@ -60,13 +60,13 @@ func ping() {
 			User:   url.UserPassword(cli.Setup.Username, cli.Setup.Password),
 		}
 
-		urls = append(urls, u.String())
+		urls = append(urls, u)
 	}
 
 	if cli.Listen.TLS != "" {
 		host, port, err := net.SplitHostPort(cli.Listen.TLS)
 		if err != nil {
-			l.Fatal(err)
+			logger.Fatal("Getting host and port failed.", zap.Error(err))
 		}
 
 		l.Debugf("--listen-tls flag is set. Ping to %s will be performed.", cli.Listen.Addr)
@@ -95,46 +95,43 @@ func ping() {
 			RawQuery: values.Encode(),
 		}
 
-		urls = append(urls, u.String())
+		urls = append(urls, u)
 	}
 
 	if cli.Listen.Unix != "" {
 		l.Debugf("--listen-unix flag is set. Ping to %s will be performed.", cli.Listen.Unix)
 
-		urls = append(urls, "mongodb://"+url.PathEscape(cli.Listen.Unix))
+		urls = append(urls, &url.URL{Scheme: "mongodb", Path: url.PathEscape(cli.Listen.Unix)})
 	}
 
 	if len(urls) == 0 {
-		l.Info("Neither --listen-addr nor --listen-unix flags were specified - skipping ping.")
+		l.Info("None of --listen-addr, --listen-unix nor --listen-tls flags were specified - skipping ping.")
 		return
 	}
 
 	for _, u := range urls {
-		l.Debugf("Pinging %s...", u)
+		redactedURL := u.Redacted()
+		l.Debugf("Pinging %s...", redactedURL)
 
 		ctx, cancel := context.WithTimeout(context.Background(), cli.Setup.Timeout)
 		defer cancel()
 
-		client, err := mongo.Connect(ctx, options.Client().ApplyURI(u))
+		client, err := mongo.Connect(ctx, options.Client().ApplyURI(u.String()))
 		if err != nil {
-			l.Fatal("Connection failed", zap.Error(err))
+			logger.Fatal("Connection failed.", zap.Error(err))
 		}
 
 		pingErr := client.Ping(ctx, nil)
 
+		// do not leave connection open when ping error causes os.Exit with Fatal
 		if err = client.Disconnect(ctx); err != nil {
-			l.Fatal("Disconnect failed", zap.Error(err))
+			logger.Fatal("Disconnect failed.", zap.Error(err))
 		}
 
 		if pingErr != nil {
-			l.Fatal("Ping failed", zap.Error(pingErr))
+			logger.Fatal("Ping failed.", zap.Error(pingErr))
 		}
 
-		var uri *url.URL
-		if uri, err = url.Parse(u); err == nil {
-			u = uri.Redacted()
-		}
-
-		l.Infof("Ping to %s successful.", u)
+		l.Infof("Ping to %s successful.", redactedURL)
 	}
 }
