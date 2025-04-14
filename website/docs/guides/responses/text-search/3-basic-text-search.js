@@ -10,7 +10,7 @@ response = {
       }
     ],
     id: Long(0),
-    ns: 'test.books'
+    ns: '{{.Database}}.books'
   },
   ok: 1.0
 }

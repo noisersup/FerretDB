@@ -1,18 +1,7 @@
-db.runCommand({
-  insert: 'books',
-  documents: [
-    {
-      _id: 'pride_prejudice_1813',
-      title: 'Pride and Prejudice',
-      author: 'Jane Austen',
-      summary:
-        'The novel follows the story of Elizabeth Bennet, a spirited young woman navigating love, societal expectations, and family drama in 19th-century England.',
-      vector: [
-        0.014391838572919369, -0.07001544535160065, 0.03249300271272659, 0.017455201596021652, -0.012363946065306664,
-        0.04970458894968033, 0.05334962531924248, -0.04171367362141609, -0.042840130627155304, 0.038735587149858475,
-        -0.036975011229515076, 0.02225673384964466
-      ]
-    },
+response = {
+  ok: 0.0,
+  ns: '{{.Database}}.books',
+  firstBatch: [
     {
       _id: 'moby_dick_1851',
       title: 'Moby Dick',
@@ -38,4 +27,4 @@ db.runCommand({
       ]
     }
   ]
-})
+}
