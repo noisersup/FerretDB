@@ -1,5 +1,5 @@
 {
-  "create-ttl-index": {
+  "1-create-ttl-index": {
     "request": {
       "createIndexes": "books",
       "indexes": [
@@ -30,7 +30,7 @@
       }
     }
   },
-  "insert-ttl-data": {
+  "2-insert-ttl-data": {
     "request": {
       "insert": "books",
       "documents": [
